@@ -17,12 +17,12 @@ export default function PatientPage() {
     if (!socket) return;
     // Announce patient presence so staff dashboard can create/track the card immediately
     socket.emit('patient-connect', { values, ts: Date.now() });
-  }, [socket]);
+  }, [socket, values]);
 
   useEffect(() => {
     // broadcast form updates in real-time
     socket?.emit('form-update', { values, ts: Date.now() });
-  }, [values]);
+  }, [socket, values]);
 
   const onSubmit = () => {
     const res = validate();

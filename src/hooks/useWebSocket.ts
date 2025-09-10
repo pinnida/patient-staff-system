@@ -12,7 +12,9 @@ export function useWebSocket() {
     async function init() {
       try {
         await fetch('/api/socket');
-      } catch (_) {}
+      } catch {
+        // Ignore fetch errors
+      }
       if (isUnmounted) return;
       const socket = getSocket();
       socketRef.current = socket;
@@ -34,7 +36,7 @@ export function useWebSocket() {
     return () => {
       isUnmounted = true;
       // cleanup after init resolves
-      Promise.resolve(cleanupPromise).then((cleanup: any) => {
+      Promise.resolve(cleanupPromise).then((cleanup: unknown) => {
         if (typeof cleanup === 'function') cleanup();
       });
     };

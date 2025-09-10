@@ -8,7 +8,7 @@ import { useMemo, useState } from 'react';
 
 type PatientSummary = {
   id: string;
-  values: any;
+  values: Record<string, unknown>;
   status: 'active' | 'inactive' | 'submitted' | 'error' | 'disconnected';
   updatedAt: number;
 };
@@ -21,23 +21,27 @@ export default function StaffPage() {
     const map = new Map<string, PatientSummary>();
     for (const e of events) {
       if (e.type === 'patient-connected') {
-        const id = e.payload.id ?? e.payload?.id;
+        const payload = e.payload as { id?: string };
+        const id = payload?.id;
         if (!id) continue;
         map.set(id, { id, values: {}, status: 'active', updatedAt: Date.now() });
       }
       if (e.type === 'form-updated') {
-        const id = e.payload.id;
+        const payload = e.payload as { id: string; values: Record<string, unknown>; ts?: number };
+        const id = payload.id;
         const prev = map.get(id) ?? { id, values: {}, status: 'active', updatedAt: 0 };
-        map.set(id, { ...prev, values: e.payload.values, status: 'active', updatedAt: e.payload.ts || Date.now() });
+        map.set(id, { ...prev, values: payload.values, status: 'active', updatedAt: payload.ts || Date.now() });
       }
       if (e.type === 'form-submitted') {
-        const baseId = e.payload.id;
-        const submissionKey = `${baseId}-${e.payload.ts || Date.now()}`;
+        const payload = e.payload as { id: string; values: Record<string, unknown>; ts?: number };
+        const baseId = payload.id;
+        const submissionKey = `${baseId}-${payload.ts || Date.now()}`;
         const prev = map.get(submissionKey) ?? { id: submissionKey, values: {}, status: 'submitted', updatedAt: 0 };
-        map.set(submissionKey, { ...prev, values: e.payload.values, status: 'submitted', updatedAt: e.payload.ts || Date.now() });
+        map.set(submissionKey, { ...prev, values: payload.values, status: 'submitted', updatedAt: payload.ts || Date.now() });
       }
       if (e.type === 'patient-disconnect') {
-        const id = e.payload.id;
+        const payload = e.payload as { id: string };
+        const id = payload.id;
         const prev = map.get(id) ?? { id, values: {}, status: 'disconnected', updatedAt: 0 };
         map.set(id, { ...prev, status: 'disconnected', updatedAt: Date.now() });
       }
@@ -58,10 +62,10 @@ export default function StaffPage() {
                 className="rounded-lg bg-white p-4 text-left shadow-sm hover:shadow-md"
               >
                 <div className="mb-2 flex items-center justify-between">
-                  <span className="font-medium text-slate-800">{p.values?.firstName || 'ผู้ป่วยกำลังกรอกข้อมูล...'}</span>
+                  <span className="font-medium text-slate-800">{(p.values as any)?.firstName || 'ผู้ป่วยกำลังกรอกข้อมูล...'}</span>
                   <StatusIndicator status={p.status} />
                 </div>
-                <div className="text-sm text-slate-600">ความคืบหน้า: {computeCompletionPercentage(p.values || {})}%</div>
+                <div className="text-sm text-slate-600">ความคืบหน้า: {computeCompletionPercentage(p.values as any || {})}%</div>
                 <div className="text-xs text-slate-500">อัปเดตล่าสุด: {new Date(p.updatedAt).toLocaleTimeString()}</div>
               </button>
             ))}
